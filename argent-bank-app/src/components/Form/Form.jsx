@@ -1,29 +1,21 @@
-import './form.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleUser } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router-dom';
 
 import UserLogin from '../../services/hooks/userLogin';
 import { URL_LOGIN, URL_PROFILE } from '../../config';
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import {  useSelector } from 'react-redux';
 
 
 
 function Form() {
-    const { email, setEmail, password, setPassword, handleLogin, errorMessage, setErrorMessage, accessTokenValid, setAccessTokenValid } = UserLogin()
+    const isAuthenticated = useSelector(state => state.auth.isAuthenticated)
+    const accessToken = useSelector(state => state.auth.accessToken)
+    const { email, setEmail, password, setPassword, handleLogin, errorMessage, setErrorMessage } = UserLogin();
+    const [loginSuccess, setLoginSuccess] = useState(false);
     const navigate = useNavigate()
 
-
-    useEffect(() => {
-        const accessToken = localStorage.getItem('authAccessToken')
-
-        if(accessToken) {
-            setAccessTokenValid(true)
-            console.log('Utilisateur connecté')
-        } else{
-            console.log('Utilisateur non connecté')
-        }
-    }, [setAccessTokenValid]);
 
     const handleFormSubmit = async (e) => {
         e.preventDefault()
@@ -33,20 +25,22 @@ function Form() {
             return;
         }
 
-        const loginSuccess = await handleLogin()
+        const loginResult = await handleLogin();
 
-        if (loginSuccess) {
-            if(accessTokenValid) {                
-                // go to profile page
-                navigate(URL_PROFILE)
-            } else {
-                navigate(URL_LOGIN)
-            }
-            
-        } else {
-            setErrorMessage('Identifiants incorrects')
-        }
+        setLoginSuccess(loginResult);
+
     }
+
+    useEffect(() => {
+        if(loginSuccess){
+
+            if (isAuthenticated || loginSuccess) {
+                navigate(URL_PROFILE);
+            } else {
+                navigate(URL_LOGIN);
+            }
+        }
+    }, [loginSuccess, accessToken, isAuthenticated, navigate]);
 
 
     return (
@@ -75,16 +69,13 @@ function Form() {
                     <label htmlFor="remember-me">Remember me</label>
                 </div>
                 {errorMessage && <div>{errorMessage}</div>}
-                {/* <!-- PLACEHOLDER DUE TO STATIC SITE --> */}
-                <button 
-                    type='submit' 
+                <button
+                    type='submit'
                     className="sign-in-button"
-                    // onClick={() => handleLogout(accessTokenValid)}
                 >
                     Sign In
                 </button>
-                {/* <!-- SHOULD BE THE BUTTON BELOW --> */}
-                {/* <button className="sign-in-button">Sign In</button> */}
+
 
             </form>
         </section>

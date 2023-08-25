@@ -1,25 +1,42 @@
 import './profile.css'
 import Button from '../../components/Button/Button'
 import Account from '../../components/Account/Account'
-import { GetDatas } from '../../services/hooks/userData'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { setUser, updateUser } from '../../utils/slices/userSlice'
 import EditProfile from '../../components/EditProfile/EditProfile'
+import { fetchUserData } from '../../services/hooks/userActions'
 
 
 function Profile() {
-    const [refreshUserData, setRefreshUserData] = useState(false)
-    const { userData } = GetDatas(refreshUserData)
+    const dispatch = useDispatch()
+    const { firstName, lastName } = useSelector((state) => state.user);
+    const [newFirstName, setNewFirstName] = useState(firstName);
+    const [newLastName, setNewLastName] = useState(lastName);
     const [isEditing, setIsEditing] = useState(false)
 
+    useEffect(() => {
+        dispatch(fetchUserData())
+    }, [dispatch]);
 
+    // const handleUpdateSuccess = (newFirstName, newLastName) => {
+    //     setNewFirstName(newFirstName)
+    //     setNewLastName(newLastName)
+    //     setIsEditing(false)
+    // }
 
-    const handleUpdateSuccess = () => {
+    const handleUserDataRefresh = () => {
+        dispatch(fetchUserData())
+    }
+
+    const handleEditProfileClick = () => {
+        setIsEditing(true)
+    }
+
+    const handleReturnToProfile = () => {
         setIsEditing(false)
     }
 
-    const handleUserDataRefresh = () => {
-        setRefreshUserData(!refreshUserData)
-    }
 
     return (
         <main className='main bg-dark'>
@@ -27,15 +44,19 @@ function Profile() {
                 {isEditing ? (
                     <h1>Edit Your Profile</h1>
                 ) : (
-                    <h1>Welcome back<br /> {userData.firstName} {userData.lastName} </h1>
+                    <h1>Welcome back<br /> {firstName} {lastName} </h1>
                 )}
                 {!isEditing && (
-                    <Button text="Edit Name" className="edit-button" onClick={() => setIsEditing(true)} />
+                    <Button text="Edit Name" className="edit-button" onClick={handleEditProfileClick} />
                 )}
 
             </div>
             {isEditing ? (
-                <EditProfile userData={userData} onUpdateSuccess={handleUpdateSuccess} onUserDataRefresh={handleUserDataRefresh} />
+                <EditProfile
+                    userData={{ firstName, lastName}}
+                    onUserDataRefresh={handleUserDataRefresh}
+                    onReturnToProfile={handleReturnToProfile}
+                />
             ) : (
                 <div>
                     <h2 className="sr-only">Accounts</h2>
